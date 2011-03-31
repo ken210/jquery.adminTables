@@ -178,13 +178,13 @@ $.fn.adminTable = function(options) {
 				prev = $('<li />').append(
 							$('<a />').addClass('prev')
 										.attr('href','#anterior')
-										.html('« Anterior')
+										.html('« Previous')
 				),
 		
 				next = $('<li />').append(
 							$('<a />').addClass('next')
 										.attr('href','#proxima')
-										.html('Próxima »')
+										.html('Next »')
 				);
 				
 			for (var i = 1; i <= totalPages; i++) {
