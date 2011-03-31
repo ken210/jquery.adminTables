@@ -6,7 +6,7 @@
 
 (function($){ // non-conflict mode
 	
-$.fn.table = function(options) {
+$.fn.adminTable = function(options) {
 	
 	// optional configs
 	var defaults = {
@@ -27,7 +27,6 @@ $.fn.table = function(options) {
 		
 	};
 	
-	
 	// merge defaults with options
 	$.extend(defaults, options);
 	
@@ -40,21 +39,19 @@ $.fn.table = function(options) {
 	
 	
 		// methods
-		init = function () {
-			
-			if (defaults.sortable) sort();
-
-			if (defaults.paged) paginate();
-	
-			if (defaults.checkRows) addCheckbox();
-			
-			cornerClasses();
-			
-		},
 		
 		// add a checkbox on each row start
 		addCheckbox = function(){
 			
+			// create checkAll checkbox
+			$('<input />',{
+
+				type: 'checkbox',
+				value: 'checkAll'
+
+			}).appendTo($('th:first','thead'));
+			
+			// create other checkboxes
 			var altLines = true;
 
 			rows.each(function(){
@@ -65,7 +62,7 @@ $.fn.table = function(options) {
 					checkbox = $('<input />',{ type: 'checkbox' }),
 	
 					// puts row value into checkbox
-					rowValue = (row.index() === 0) ? 'checkAll' : row.children('td:first').html();
+					rowValue = row.children('td:first').html();
 				
 				// alternating lines
 				if (defaults.alternate) {
@@ -82,24 +79,7 @@ $.fn.table = function(options) {
 				
 			});
 			
-			// add listeners
-			
-			// check all
-			$('input:checkbox','th').live('change', function(){
-				
-				var checked = $(this).is(':checked');
-				$('input:checkbox',$(this).closest('table')).attr('checked',checked);
-				
-			});
-			
-			// check one
-			$('input:checkbox','td').live('change', function(){
-				
-				if (!$(this).is('input:checked')) $('th input:checkbox',$(this).closest('table')).attr('checked',false);
-				
-			});
 		},
-		
 		
 		// adds classes for corner cells
 		cornerClasses = function(){
@@ -126,45 +106,9 @@ $.fn.table = function(options) {
 			});
 		},
 		
-		// main pagination method
-		paginate = function(){
-		
-			// if there is more than 1 page
-			if (totalPages > 1) {
-			
-				createPageButtons(); // create buttons
-				
-				changePage(); // trigger changePage
-				
-				$('.pagination a.prev').live('click',function(){
-					defaults.currentPage--;
-					changePage();
-					return false;
-				})
-				
-				$('.pagination a.next').live('click',function(){
-					defaults.currentPage++;
-					changePage();
-					return false;
-				})
-				
-				$('.pagination a.pageNumber').live('click',function(){
-					defaults.currentPage = $(this).closest('li').index();
-					changePage();
-					return false;
-				})
-				
-				$('.pagination a.selected').live('click',function(){
-					return false;
-				})
-				
-			}
-	
-		},
-		
 		// method to handle page changes
 		changePage = function(){
-		
+			
 			var start = (defaults.currentPage - 1) * defaults.perPage,
 			
 				end = start + defaults.perPage;
@@ -192,6 +136,36 @@ $.fn.table = function(options) {
 			
 		},
 		
+		changePageDown = function(){
+			
+			defaults.currentPage--;
+			
+			changePage();
+			
+			return false;
+
+		},
+		
+		changePageUp = function(){
+			
+			defaults.currentPage++;
+			
+			changePage();
+			
+			return false;
+
+		},
+		
+		changePageNumber = function(){
+			
+			defaults.currentPage = $(this).closest('li').index();
+			
+			changePage();
+			
+			return false;
+
+		},
+		
 		createPageButtons = function(){
 			
 			// create placeholder
@@ -204,13 +178,13 @@ $.fn.table = function(options) {
 				prev = $('<li />').append(
 							$('<a />').addClass('prev')
 										.attr('href','#anterior')
-										.html('Â« Anterior')
+										.html('« Anterior')
 				),
 		
 				next = $('<li />').append(
 							$('<a />').addClass('next')
 										.attr('href','#proxima')
-										.html('PrÃ³xima Â»')
+										.html('Próxima »')
 				);
 				
 			for (var i = 1; i <= totalPages; i++) {
@@ -230,11 +204,62 @@ $.fn.table = function(options) {
 			
 			placeholder.appendTo($(table).closest('div'));
 				
+		},
+		
+		checkOne = function (event) {
+			
+			if (!$(event.target).is('input:checked')) $('th input:checkbox',$(event.target).closest('table')).removeAttr('checked');
+			
+		},
+		
+		checkAll = function (event) {
+			
+			var checked = $(event.target).is(':checked');
+			
+			$('input:checkbox',$(event.target).closest('table')).attr('checked',checked);
+
 		};
-	
+		
 	return this.each(function(){
 		
-		init();
+		if (defaults.sortable) {
+			
+			sort();
+			
+		}
+
+		cornerClasses();
+
+		if (defaults.paged && totalPages > 1) {
+			
+			createPageButtons(); // create buttons
+			
+			changePage(defaults.currentPage); // go to default page
+			
+			// listerners
+			
+			$('.pagination a.prev').bind('click', changePageDown);
+			
+			$('.pagination a.next').bind('click', changePageUp);
+			
+			$('.pagination a.pageNumber').bind('click', changePageNumber);
+			
+			$('.pagination a.selected').bind('click',function(){ return false; });
+			
+		}
+
+		if (defaults.checkRows) {
+			
+			addCheckbox(); // create checkboxes
+			
+			// listeners
+			
+			$('input','td:first').bind('change',checkOne);
+		
+			$('input','th:first').bind('change',checkAll);
+			
+			
+		}
 		
 	});
 	
